@@ -13,13 +13,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Lifecycle hooks are used to add additional behavior (side-effects) and to peek into sequence without modifying it. In
  * this chapter we will explore most common lifecycle hooks.
- *
+ * <p>
  * Read first:
- *
+ * <p>
  * https://projectreactor.io/docs/core/release/reference/#which.peeking
- *
+ * <p>
  * Useful documentation:
- *
+ * <p>
  * https://projectreactor.io/docs/core/release/reference/#which-operator
  * https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Mono.html
  * https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html
@@ -29,16 +29,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class c4_LifecycleHooks extends LifecycleHooksBase {
 
     /**
-     * Add a hook that will execute when Flux `temperatureFlux` is subscribed too.
-     * As a side effect hook should add string "subscribe" to `hooksTriggered` list.
+     * Add a hook that will execute when Flux `temperatureFlux` is subscribed too. As a side effect hook should add
+     * string "subscribe" to `hooksTriggered` list.
      */
     @Test
     public void no_subscription_no_gains() {
         CopyOnWriteArrayList<String> hooksTriggered = new CopyOnWriteArrayList<>();
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+                .doOnSubscribe(sub -> hooksTriggered.add("subscribe"));
 
         StepVerifier.create(temperatureFlux.take(5))
                     .expectNextCount(5)
@@ -56,8 +55,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         CopyOnWriteArrayList<String> hooksTriggered = new CopyOnWriteArrayList<>();
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+                .doFirst(() -> hooksTriggered.add("before subscribe"));
 
         StepVerifier.create(temperatureFlux.take(5).doOnSubscribe(s -> hooksTriggered.add("subscribe")))
                     .expectNextCount(5)
@@ -75,8 +73,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicInteger counter = new AtomicInteger(0);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+                .doOnNext(i -> System.out.println(counter.incrementAndGet()));
 
         StepVerifier.create(temperatureFlux)
                     .expectNextCount(20)
@@ -94,8 +91,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicBoolean completed = new AtomicBoolean(false);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+                .doOnComplete(() -> completed.set(true));
 
         StepVerifier.create(temperatureFlux.skip(20))
                     .expectNextCount(0)
@@ -113,8 +109,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         AtomicBoolean canceled = new AtomicBoolean(false);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+                .doOnCancel(() -> canceled.set(true));
 
         StepVerifier.create(temperatureFlux.take(0))
                     .expectNextCount(0)
@@ -125,16 +120,14 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
 
     /**
      * Add a side-effect that increments `hooksTriggeredCounter` counter when the `temperatureFlux` terminates, either
-     * by completing successfully or failing with an error.
-     * Use only one operator.
+     * by completing successfully or failing with an error. Use only one operator.
      */
     @Test
     public void terminator() {
         AtomicInteger hooksTriggeredCounter = new AtomicInteger(0);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+                .doOnTerminate(hooksTriggeredCounter::incrementAndGet);
 
         StepVerifier.create(temperatureFlux.take(0))
                     .expectNextCount(0)
@@ -153,16 +146,14 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
 
     /**
      * Add a side effect that increments `hooksTriggeredCounter` when the `temperatureFlux` terminates, either when
-     * completing successfully, gets canceled or failing with an error.
-     * Use only one operator!
+     * completing successfully, gets canceled or failing with an error. Use only one operator!
      */
     @Test
     public void one_to_catch_them_all() {
         AtomicInteger hooksTriggeredCounter = new AtomicInteger(0);
 
         Flux<Integer> temperatureFlux = room_temperature_service()
-                //todo: change this line only
-                ;
+                .doFinally(signal -> hooksTriggeredCounter.incrementAndGet());
 
         StepVerifier.create(temperatureFlux.take(0))
                     .expectNextCount(0)
@@ -193,7 +184,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
                                  .doFirst(() -> sideEffects.add("one"));
 
         List<String> orderOfExecution =
-                Arrays.asList("todo", "todo", "todo"); //todo: change this line only
+                Arrays.asList("one", "two", "three");
 
         StepVerifier.create(just)
                     .expectNext(true)
@@ -206,10 +197,10 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
      * There is advanced operator, typically used for monitoring of a Flux. This operator will add behavior
      * (side-effects) triggered for each signal that happens on Flux. It also has access to the context, which might be
      * useful later.
-     *
+     * <p>
      * In this exercise, Flux will emit three elements and then complete. Add signal names to `signal` list dynamically,
      * once these signals occur.
-     *
+     * <p>
      * Bonus: Explore this operator's documentation, as it may be useful in the future.
      */
     @Test
@@ -217,8 +208,7 @@ public class c4_LifecycleHooks extends LifecycleHooksBase {
         CopyOnWriteArrayList<String> signals = new CopyOnWriteArrayList<>();
 
         Flux<Integer> flux = Flux.just(1, 2, 3)
-                //todo: change this line only
-                ;
+                                 .doOnEach(s -> signals.add(s.getType().name()));
 
         StepVerifier.create(flux)
                     .expectNextCount(3)
